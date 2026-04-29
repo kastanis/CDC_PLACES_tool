@@ -1,6 +1,7 @@
 import json
 
 import cdc_places_tool.feedback as feedback
+import streamlit_app
 from cdc_places_tool.feedback import QuestionLogEntry, log_question, log_question_supabase, summarize_question_log
 
 
@@ -85,3 +86,33 @@ def test_loads_local_env_without_overriding_existing_values(tmp_path, monkeypatc
 
     assert feedback.feedback_backend() == "supabase"
     assert feedback.os.getenv("APP_VERSION") == "from-shell"
+
+
+def test_streamlit_feedback_summary_handles_older_summary_shape(monkeypatch):
+    calls = {"dataframes": []}
+
+    monkeypatch.setattr(
+        streamlit_app,
+        "summarize_question_log",
+        lambda: {
+            "total_questions": 0,
+            "accepted_questions": 0,
+            "refused_questions": 0,
+            "operations": [],
+            "measures": [],
+            "recent_refusals": [],
+        },
+    )
+    monkeypatch.setattr(streamlit_app.st, "metric", lambda *args, **kwargs: None)
+    monkeypatch.setattr(streamlit_app.st, "write", lambda *args, **kwargs: None)
+    monkeypatch.setattr(streamlit_app.st, "dataframe", lambda rows, **kwargs: calls["dataframes"].append(rows))
+
+    class FakeColumns:
+        def metric(self, *args, **kwargs):
+            return None
+
+    monkeypatch.setattr(streamlit_app.st, "columns", lambda *args, **kwargs: [FakeColumns(), FakeColumns()])
+
+    streamlit_app.render_feedback_summary()
+
+    assert calls["dataframes"][-1] == []

@@ -36,6 +36,9 @@ def load_streamlit_secrets() -> None:
         "SUPABASE_FEEDBACK_TABLE",
         "DATASET_ID",
         "APP_VERSION",
+        "OPENAI_API_KEY",
+        "OPENAI_MODEL",
+        "OPENAI_TIMEOUT",
     ]:
         try:
             value = secrets[key]
@@ -120,6 +123,7 @@ def render_cautions(layer, measure: Measure | None = None) -> None:
 
 def render_feedback_summary() -> None:
     summary = summarize_question_log()
+    parsers = summary.get("parsers", [])
     st.metric("Questions", summary["total_questions"])
     cols = st.columns(2)
     cols[0].metric("Accepted", summary["accepted_questions"])
@@ -134,7 +138,7 @@ def render_feedback_summary() -> None:
 
     st.write("Parsers")
     st.dataframe(
-        [{"Parser": parser, "Count": count} for parser, count in summary["parsers"]],
+        [{"Parser": parser, "Count": count} for parser, count in parsers],
         hide_index=True,
         width="stretch",
     )
