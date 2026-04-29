@@ -100,6 +100,7 @@ def ask(ctx: click.Context, parser: str, question: str) -> None:
         operation=answer.operation,
         measure_id=answer.measure.id if answer.measure else None,
         message=answer.message,
+        parser=answer.parser,
     )
     if not answer.ok:
         click.echo(answer.message)

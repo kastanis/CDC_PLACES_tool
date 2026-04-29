@@ -150,7 +150,7 @@ That mode uses API credits, so keep keys in `.env` or Streamlit secrets, never i
 
 ## Feedback Loop
 
-Plain-English questions are logged locally to `logs/questions.jsonl` by default, which is ignored by Git. The log records the question, whether it was answered, the matched operation, the matched measure, and any refusal message. It does not record names, emails, IP addresses, or browser identifiers.
+Plain-English questions are logged locally to `logs/questions.jsonl` by default, which is ignored by Git. The log records the question, whether it was answered, the matched operation, the matched measure, the parser used, and any refusal message. It does not record names, emails, IP addresses, or browser identifiers.
 
 For shared prototypes, set `FEEDBACK_BACKEND=supabase` and configure `SUPABASE_URL`, `SUPABASE_KEY`, and `SUPABASE_FEEDBACK_TABLE`. See [docs/supabase_feedback.md](docs/supabase_feedback.md).
 
@@ -163,5 +163,5 @@ See [docs/tool_pattern.md](docs/tool_pattern.md) for the reusable pattern behind
 Useful next steps:
 
 - Add more PLACES measures to `semantic/measures.yaml`.
-- Add an LLM parser as an optional layer on top of the deterministic router.
+- Add parser disagreement review using the Supabase feedback table.
 - Add a richer results page with charts and county profile views.

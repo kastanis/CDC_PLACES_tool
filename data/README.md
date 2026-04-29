@@ -2,6 +2,8 @@
 
 `sample_places_county.csv` is a small real extract from CDC PLACES County Data (GIS Friendly Format), 2025 release.
 
+`places_county_current.csv` is the full county-level import for the measures currently modeled in `semantic/measures.yaml`. The app uses this full file by default when it is present, and falls back to the sample file only if the full import has not been fetched.
+
 Source endpoint:
 
 ```text

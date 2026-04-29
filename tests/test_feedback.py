@@ -12,6 +12,7 @@ def test_logs_and_summarizes_questions(tmp_path):
         operation="rank",
         measure_id="diabetes",
         message="Highest diagnosed diabetes among adults values",
+        parser="rules",
         path=log_path,
     )
     log_question(
@@ -28,6 +29,7 @@ def test_logs_and_summarizes_questions(tmp_path):
     assert summary["accepted_questions"] == 1
     assert summary["refused_questions"] == 1
     assert summary["operations"][0] == ("rank", 1)
+    assert summary["parsers"][0] == ("rules", 1)
 
 
 def test_writes_supabase_payload(monkeypatch):
@@ -60,6 +62,7 @@ def test_writes_supabase_payload(monkeypatch):
             operation="rank",
             measure_id="diabetes",
             message="Highest values",
+            parser="openai",
             dataset_id="test_dataset",
             app_version="test",
         )
@@ -67,6 +70,7 @@ def test_writes_supabase_payload(monkeypatch):
 
     assert captured["url"] == "https://example.supabase.co/rest/v1/question_feedback"
     assert captured["payload"]["measure_id"] == "diabetes"
+    assert captured["payload"]["parser"] == "openai"
     assert captured["headers"]["Apikey"] == "test-key"
 
 

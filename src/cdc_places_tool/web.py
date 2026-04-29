@@ -184,6 +184,7 @@ def make_handler(rows: list[dict], layer: SemanticLayer) -> type[BaseHTTPRequest
                 operation=routed.operation,
                 measure_id=routed.measure.id if routed.measure else None,
                 message=routed.message,
+                parser=routed.parser,
             )
             if not routed.ok:
                 self.send_json({"ok": False, "answer": routed.message})

@@ -27,6 +27,7 @@ class QuestionLogEntry:
     operation: str | None
     measure_id: str | None
     message: str
+    parser: str | None = None
     dataset_id: str | None = None
     app_version: str | None = None
 
@@ -37,6 +38,7 @@ def log_question(
     operation: str | None,
     measure_id: str | None,
     message: str,
+    parser: str | None = None,
     path: Path = DEFAULT_LOG_PATH,
 ) -> None:
     load_local_env()
@@ -47,6 +49,7 @@ def log_question(
         operation=operation,
         measure_id=measure_id,
         message=message,
+        parser=parser,
         dataset_id=os.getenv("DATASET_ID"),
         app_version=os.getenv("APP_VERSION"),
     )
@@ -144,7 +147,7 @@ def read_question_log_supabase(limit: int = 1000) -> list[QuestionLogEntry]:
     url, key, table = supabase_config()
     params = urlencode(
         {
-            "select": "timestamp_utc,question,ok,operation,measure_id,message,dataset_id,app_version",
+            "select": "timestamp_utc,question,ok,operation,measure_id,message,parser,dataset_id,app_version",
             "order": "timestamp_utc.asc",
             "limit": str(limit),
         }
@@ -167,6 +170,7 @@ def question_entry_from_dict(payload: dict) -> QuestionLogEntry:
         operation=payload.get("operation"),
         measure_id=payload.get("measure_id"),
         message=payload.get("message", ""),
+        parser=payload.get("parser"),
         dataset_id=payload.get("dataset_id"),
         app_version=payload.get("app_version"),
     )
@@ -176,6 +180,7 @@ def summarize_question_log(path: Path = DEFAULT_LOG_PATH) -> dict:
     entries = read_question_log(path)
     operations = Counter(entry.operation or "refused" for entry in entries)
     measures = Counter(entry.measure_id or "unknown" for entry in entries)
+    parsers = Counter(entry.parser or "unknown" for entry in entries)
     refused = [entry for entry in entries if not entry.ok]
     return {
         "total_questions": len(entries),
@@ -183,5 +188,6 @@ def summarize_question_log(path: Path = DEFAULT_LOG_PATH) -> dict:
         "refused_questions": len(refused),
         "operations": operations.most_common(),
         "measures": measures.most_common(),
+        "parsers": parsers.most_common(),
         "recent_refusals": refused[-10:],
     }

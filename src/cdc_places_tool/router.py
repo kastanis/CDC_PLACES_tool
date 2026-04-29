@@ -78,6 +78,7 @@ class RoutedAnswer:
     operation: str | None = None
     result: dict | None = None
     measure: Measure | None = None
+    parser: str | None = None
 
 
 def route_question(
@@ -88,18 +89,21 @@ def route_question(
 ) -> RoutedAnswer:
     allowed, guardrail_message = check_question(question)
     if not allowed:
-        return RoutedAnswer(ok=False, message=guardrail_message or "Unsupported question.")
+        return RoutedAnswer(ok=False, message=guardrail_message or "Unsupported question.", parser=parser)
 
     if parser in {"ollama", "openai", "auto"}:
         try:
             intent = parse_question_with_provider(question, layer, parser)
-            return route_intent(question, rows, layer, intent)
+            parser_used = "ollama" if parser == "auto" else parser
+            return route_intent(question, rows, layer, intent, parser_used=parser_used)
         except Exception as exc:
             if parser != "auto":
                 return RoutedAnswer(
                     ok=False,
                     message=f"{parser} parser unavailable or misconfigured: {exc}",
+                    parser=parser,
                 )
+            parser = "rules"
 
     measure = find_measure(question, layer)
     places = find_places(question, rows)
@@ -109,35 +113,36 @@ def route_question(
     try:
         if wants_explanation(normalized):
             if not measure:
-                return RoutedAnswer(False, "I need a measure to explain. Try: explain uninsured.")
-            return RoutedAnswer(True, f"Explaining {measure.label}.", "explain", measure=measure)
+                return RoutedAnswer(False, "I need a measure to explain. Try: explain uninsured.", parser=parser)
+            return RoutedAnswer(True, f"Explaining {measure.label}.", "explain", measure=measure, parser=parser)
 
         if wants_summary(normalized):
             if places:
                 result = summarize(rows, layer, places[0])
-                return RoutedAnswer(True, result["headline"], "summarize", result, measure)
-            return RoutedAnswer(False, "I need a place to summarize. Try: summarize Fresno County, CA.")
+                return RoutedAnswer(True, result["headline"], "summarize", result, measure, parser=parser)
+            return RoutedAnswer(False, "I need a place to summarize. Try: summarize Fresno County, CA.", parser=parser)
 
         if wants_comparison(normalized) or len(places) >= 2:
             if not measure:
-                return RoutedAnswer(False, "I need a measure for the comparison.")
+                return RoutedAnswer(False, "I need a measure for the comparison.", parser=parser)
             if len(places) < 2:
-                return RoutedAnswer(False, "I need at least two places to compare.")
+                return RoutedAnswer(False, "I need at least two places to compare.", parser=parser)
             result = compare(rows, layer, measure.id, places)
-            return RoutedAnswer(True, result["headline"], "compare", result, measure)
+            return RoutedAnswer(True, result["headline"], "compare", result, measure, parser=parser)
 
         if wants_ranking(normalized) or measure:
             if not measure:
-                return RoutedAnswer(False, "I need a measure to rank.")
+                return RoutedAnswer(False, "I need a measure to rank.", parser=parser)
             limit = find_limit(question)
             result = rank(rows, layer, measure.id, state=state, limit=limit, descending=not wants_lowest(normalized))
-            return RoutedAnswer(True, result["headline"], "rank", result, measure)
+            return RoutedAnswer(True, result["headline"], "rank", result, measure, parser=parser)
     except (KeyError, ValueError) as exc:
-        return RoutedAnswer(False, str(exc))
+        return RoutedAnswer(False, str(exc), parser=parser)
 
     return RoutedAnswer(
         False,
         "I can rank, compare, summarize a place, or explain a measure. Try asking: Which California counties have the highest uninsured rates?",
+        parser=parser,
     )
 
 
@@ -147,7 +152,13 @@ def parse_question_with_provider(question: str, layer: SemanticLayer, parser: st
     return parse_question_with_ollama(question, layer)
 
 
-def route_intent(question: str, rows: list[dict], layer: SemanticLayer, intent: ParsedIntent) -> RoutedAnswer:
+def route_intent(
+    question: str,
+    rows: list[dict],
+    layer: SemanticLayer,
+    intent: ParsedIntent,
+    parser_used: str | None = None,
+) -> RoutedAnswer:
     operation = intent.operation
     if operation == "unsupported" or operation is None:
         return route_question(question, rows, layer, parser="rules")
@@ -167,35 +178,35 @@ def route_intent(question: str, rows: list[dict], layer: SemanticLayer, intent: 
     try:
         if operation == "explain":
             if not measure:
-                return RoutedAnswer(False, "I need a measure to explain. Try: explain uninsured.")
-            return RoutedAnswer(True, f"Explaining {measure.label}.", "explain", measure=measure)
+                return RoutedAnswer(False, "I need a measure to explain. Try: explain uninsured.", parser=parser_used)
+            return RoutedAnswer(True, f"Explaining {measure.label}.", "explain", measure=measure, parser=parser_used)
 
         if operation == "summarize":
             if places:
                 result = summarize(rows, layer, places[0])
-                return RoutedAnswer(True, result["headline"], "summarize", result, measure)
-            return RoutedAnswer(False, "I need a place to summarize. Try: summarize Fresno County, CA.")
+                return RoutedAnswer(True, result["headline"], "summarize", result, measure, parser=parser_used)
+            return RoutedAnswer(False, "I need a place to summarize. Try: summarize Fresno County, CA.", parser=parser_used)
 
         if operation == "compare":
             if not measure:
-                return RoutedAnswer(False, "I need a measure for the comparison.")
+                return RoutedAnswer(False, "I need a measure for the comparison.", parser=parser_used)
             if len(places) < 2:
-                return RoutedAnswer(False, "I need at least two places to compare.")
+                return RoutedAnswer(False, "I need at least two places to compare.", parser=parser_used)
             result = compare(rows, layer, measure.id, places)
-            return RoutedAnswer(True, result["headline"], "compare", result, measure)
+            return RoutedAnswer(True, result["headline"], "compare", result, measure, parser=parser_used)
 
         if operation == "rank":
             if not measure:
-                return RoutedAnswer(False, "I need a measure to rank.")
+                return RoutedAnswer(False, "I need a measure to rank.", parser=parser_used)
             limit = intent.limit or find_limit(question)
             descending = intent.direction != "lowest"
             result = rank(rows, layer, measure.id, state=state, limit=limit, descending=descending)
             if not result["rows"]:
                 state_label = f" for {state}" if state else ""
-                return RoutedAnswer(False, f"No rows found for {measure.label}{state_label}.")
-            return RoutedAnswer(True, result["headline"], "rank", result, measure)
+                return RoutedAnswer(False, f"No rows found for {measure.label}{state_label}.", parser=parser_used)
+            return RoutedAnswer(True, result["headline"], "rank", result, measure, parser=parser_used)
     except (KeyError, ValueError) as exc:
-        return RoutedAnswer(False, str(exc))
+        return RoutedAnswer(False, str(exc), parser=parser_used)
 
     return route_question(question, rows, layer, parser="rules")
 

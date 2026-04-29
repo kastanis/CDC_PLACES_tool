@@ -61,6 +61,7 @@ def log_routed_question(question: str, answer) -> None:
         operation=answer.operation,
         measure_id=answer.measure.id if answer.measure else None,
         message=answer.message,
+        parser=answer.parser,
     )
 
 
@@ -127,6 +128,13 @@ def render_feedback_summary() -> None:
     st.write("Operations")
     st.dataframe(
         [{"Operation": operation, "Count": count} for operation, count in summary["operations"]],
+        hide_index=True,
+        width="stretch",
+    )
+
+    st.write("Parsers")
+    st.dataframe(
+        [{"Parser": parser, "Count": count} for parser, count in summary["parsers"]],
         hide_index=True,
         width="stretch",
     )
