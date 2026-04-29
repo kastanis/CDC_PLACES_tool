@@ -144,7 +144,7 @@ def make_handler(rows: list[dict], layer: SemanticLayer) -> type[BaseHTTPRequest
                     "places": [place_label(row) for row in rows],
                     "dataset": layer.dataset,
                 }
-                body = HTML.replace("__METADATA__", json.dumps(metadata))
+                body = HTML.replace("__METADATA__", json.dumps(metadata, default=str))
                 self.send_html(body)
                 return
             if parsed.path == "/api/places":
