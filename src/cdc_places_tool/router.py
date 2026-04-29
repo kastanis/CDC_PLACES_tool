@@ -162,7 +162,7 @@ def route_intent(question: str, rows: list[dict], layer: SemanticLayer, intent: 
         measure = find_measure(question, layer)
 
     places = find_places(question, rows)
-    state = intent.state or find_state(question)
+    state = intent.state if intent.state in available_states(rows) else find_state(question)
 
     try:
         if operation == "explain":
@@ -190,6 +190,9 @@ def route_intent(question: str, rows: list[dict], layer: SemanticLayer, intent: 
             limit = intent.limit or find_limit(question)
             descending = intent.direction != "lowest"
             result = rank(rows, layer, measure.id, state=state, limit=limit, descending=descending)
+            if not result["rows"]:
+                state_label = f" for {state}" if state else ""
+                return RoutedAnswer(False, f"No rows found for {measure.label}{state_label}.")
             return RoutedAnswer(True, result["headline"], "rank", result, measure)
     except (KeyError, ValueError) as exc:
         return RoutedAnswer(False, str(exc))
@@ -234,6 +237,10 @@ def find_state(question: str) -> str | None:
         if abbr in tokens:
             return abbr
     return None
+
+
+def available_states(rows: list[dict]) -> set[str]:
+    return {str(row.get("state", "")).upper() for row in rows if row.get("state")}
 
 
 def find_limit(question: str) -> int:

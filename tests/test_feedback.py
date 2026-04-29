@@ -73,6 +73,7 @@ def test_writes_supabase_payload(monkeypatch):
 def test_loads_local_env_without_overriding_existing_values(tmp_path, monkeypatch):
     env_path = tmp_path / ".env"
     env_path.write_text("FEEDBACK_BACKEND=supabase\nAPP_VERSION=from-file\n")
+    monkeypatch.delenv("FEEDBACK_BACKEND", raising=False)
     monkeypatch.setenv("APP_VERSION", "from-shell")
     monkeypatch.setattr(feedback, "_ENV_LOADED", False)
 

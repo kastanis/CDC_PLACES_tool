@@ -13,6 +13,59 @@ from cdc_places_tool.semantic import SemanticLayer
 DEFAULT_OLLAMA_URL = "http://localhost:11434"
 DEFAULT_OLLAMA_MODEL = "llama3.2"
 DEFAULT_OPENAI_MODEL = "gpt-4o-mini"
+STATE_ABBRS = {
+    "AL",
+    "AK",
+    "AZ",
+    "AR",
+    "CA",
+    "CO",
+    "CT",
+    "DE",
+    "DC",
+    "FL",
+    "GA",
+    "HI",
+    "ID",
+    "IL",
+    "IN",
+    "IA",
+    "KS",
+    "KY",
+    "LA",
+    "ME",
+    "MD",
+    "MA",
+    "MI",
+    "MN",
+    "MS",
+    "MO",
+    "MT",
+    "NE",
+    "NV",
+    "NH",
+    "NJ",
+    "NM",
+    "NY",
+    "NC",
+    "ND",
+    "OH",
+    "OK",
+    "OR",
+    "PA",
+    "RI",
+    "SC",
+    "SD",
+    "TN",
+    "TX",
+    "UT",
+    "VT",
+    "VA",
+    "WA",
+    "WV",
+    "WI",
+    "WY",
+}
 
 
 @dataclass(frozen=True)
@@ -96,10 +149,10 @@ def build_system_prompt(layer: SemanticLayer) -> str:
         "You do not answer the question. Return only JSON with these keys: "
         "operation, measure_id, state, direction, limit, confidence. "
         "operation must be one of rank, compare, summarize, explain, unsupported. "
-        "direction must be highest, lowest, or null. "
-        "state must be a two-letter US postal abbreviation or null. "
-        "measure_id must be one of the known measure ids or null. "
-        "limit must be an integer or null. "
+        "direction must be highest, lowest, or unknown. "
+        "state must be a two-letter US postal abbreviation, or unknown when the user asks across all counties. "
+        "measure_id must be one of the known measure ids, or unknown. "
+        "limit must be an integer from 1 to 25. "
         "Known measures: "
         f"{json.dumps(measures)}"
     )
@@ -118,6 +171,7 @@ def intent_schema(layer: SemanticLayer) -> dict:
             "measure_id": {"type": "string", "enum": measure_ids},
             "state": {
                 "type": "string",
+                "enum": [*sorted(STATE_ABBRS), "unknown"],
                 "description": "Two-letter US state abbreviation, or unknown.",
             },
             "direction": {"type": "string", "enum": ["highest", "lowest", "unknown"]},
@@ -175,7 +229,12 @@ def clean_state(value: object) -> str | None:
     value = clean_string(value)
     if not value:
         return None
-    return value.upper()[:2]
+    normalized = value.upper()
+    if normalized in {"US", "USA", "ALL", "NATIONAL", "NATIONWIDE", "UNITED STATES"}:
+        return None
+    if normalized in STATE_ABBRS:
+        return normalized
+    return None
 
 
 def clean_limit(value: object) -> int | None:

@@ -102,3 +102,27 @@ def test_routes_with_openai_parser(monkeypatch):
     assert answer.ok
     assert answer.operation == "explain"
     assert answer.measure.id == "poor_mental_health"
+
+
+def test_llm_national_state_does_not_filter_to_empty_rows(monkeypatch):
+    from cdc_places_tool.llm_parser import ParsedIntent
+
+    def fake_parse(question, layer):
+        return ParsedIntent(
+            operation="rank",
+            measure_id="uninsured",
+            state="US",
+            direction="highest",
+            limit=5,
+        )
+
+    monkeypatch.setattr("cdc_places_tool.router.parse_question_with_openai", fake_parse)
+    answer = route_question(
+        "Which counties have the highest uninsured rate?",
+        load_rows(),
+        load_semantic_layer(),
+        parser="openai",
+    )
+    assert answer.ok
+    assert answer.operation == "rank"
+    assert len(answer.result["rows"]) == 5

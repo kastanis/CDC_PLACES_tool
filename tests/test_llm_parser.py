@@ -1,6 +1,7 @@
 import json
 
 from cdc_places_tool.llm_parser import (
+    clean_state,
     extract_model_text,
     intent_from_json,
     parse_question_with_ollama,
@@ -26,6 +27,13 @@ def test_intent_from_json_cleans_fields():
     assert intent.state == "CA"
     assert intent.direction == "lowest"
     assert intent.limit == 3
+
+
+def test_clean_state_rejects_national_or_invalid_values():
+    assert clean_state("US") is None
+    assert clean_state("all") is None
+    assert clean_state("ZZ") is None
+    assert clean_state("CA") == "CA"
 
 
 def test_parse_question_with_ollama_payload(monkeypatch):
