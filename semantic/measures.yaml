@@ -1,0 +1,133 @@
+dataset:
+  id: cdc_places_county_sample
+  name: CDC PLACES county sample
+  grain: county
+  geography_label: county
+  source: CDC PLACES
+  source_url: https://www.cdc.gov/places/
+  default_caveats:
+    - CDC PLACES values are modeled estimates, not direct local counts.
+    - Avoid causal claims unless supported by additional reporting.
+    - Rankings should be treated as reporting leads, not final conclusions.
+    - Pair estimates with local interviews, health access context, and demographic context.
+
+measures:
+  diabetes:
+    label: Diagnosed diabetes among adults
+    column: diabetes
+    unit: percent
+    universe: adults 18+
+    plain_language: Adults who report having been told by a health professional that they have diabetes.
+    synonyms:
+      - diabetes
+      - diagnosed diabetes
+      - adult diabetes
+    allowed_operations:
+      - rank
+      - compare
+      - summarize
+    caveats:
+      - Do not describe this as a count of people with diabetes unless population-based estimates are calculated separately.
+
+  obesity:
+    label: Adult obesity
+    column: obesity
+    unit: percent
+    universe: adults 18+
+    plain_language: Adults with obesity, generally based on body mass index.
+    synonyms:
+      - obesity
+      - obese adults
+      - adult obesity
+    allowed_operations:
+      - rank
+      - compare
+      - summarize
+    caveats:
+      - BMI-based obesity estimates do not capture every dimension of health or individual risk.
+
+  smoking:
+    label: Current smoking among adults
+    column: smoking
+    unit: percent
+    universe: adults 18+
+    plain_language: Adults who currently smoke cigarettes.
+    synonyms:
+      - smoking
+      - cigarette smoking
+      - smokers
+    allowed_operations:
+      - rank
+      - compare
+      - summarize
+    caveats:
+      - Self-reported smoking estimates can be affected by survey response bias.
+
+  poor_mental_health:
+    label: Frequent mental distress
+    column: poor_mental_health
+    unit: percent
+    universe: adults 18+
+    plain_language: Adults reporting frequent days of poor mental health.
+    synonyms:
+      - poor mental health
+      - mental distress
+      - frequent mental distress
+    allowed_operations:
+      - rank
+      - compare
+      - summarize
+    caveats:
+      - This is not a diagnosis rate; it is an estimate of frequent mental distress.
+
+  uninsured:
+    label: Uninsured adults
+    column: uninsured
+    unit: percent
+    universe: adults 18-64
+    plain_language: Adults under 65 without health insurance.
+    synonyms:
+      - uninsured
+      - health insurance
+      - no insurance
+    allowed_operations:
+      - rank
+      - compare
+      - summarize
+    caveats:
+      - The universe is adults under 65, not all residents.
+
+  physical_inactivity:
+    label: Physical inactivity among adults
+    column: physical_inactivity
+    unit: percent
+    universe: adults 18+
+    plain_language: Adults reporting no leisure-time physical activity.
+    synonyms:
+      - physical inactivity
+      - inactive adults
+      - exercise
+    allowed_operations:
+      - rank
+      - compare
+      - summarize
+    caveats:
+      - This measure does not capture physical activity at work or in caregiving.
+
+  annual_checkup:
+    label: Annual checkup among adults
+    column: annual_checkup
+    unit: percent
+    universe: adults 18+
+    plain_language: Adults reporting a routine checkup in the past year.
+    synonyms:
+      - annual checkup
+      - routine checkup
+      - doctor visit
+    allowed_operations:
+      - rank
+      - compare
+      - summarize
+    caveats:
+      - Higher checkup rates can reflect access, health status, age mix, or local care patterns.
+

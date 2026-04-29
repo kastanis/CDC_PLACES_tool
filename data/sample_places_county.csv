@@ -1,0 +1,12 @@
+state,county,geoid,population,diabetes,obesity,smoking,poor_mental_health,uninsured,physical_inactivity,annual_checkup
+CA,Fresno County,06019,1008654,12.7,34.8,12.9,17.8,8.9,25.6,72.4
+CA,Los Angeles County,06037,9663345,10.8,27.9,9.4,15.9,7.6,20.8,71.0
+CA,San Francisco County,06075,808437,7.2,17.1,8.8,14.6,3.9,14.3,69.8
+CA,Kern County,06029,916108,13.5,36.6,14.3,18.4,9.8,27.4,70.6
+CA,Imperial County,06025,179702,15.1,38.2,11.7,18.9,10.7,29.1,73.5
+TX,Harris County,48201,4780913,11.5,33.1,12.4,16.7,16.9,24.9,68.2
+TX,Dallas County,48113,2600840,11.8,32.4,12.0,16.9,17.6,24.2,67.7
+TX,Travis County,48453,1329001,8.3,24.9,9.2,15.4,10.8,17.2,70.4
+FL,Miami-Dade County,12086,2676867,11.9,30.2,10.1,16.5,15.8,23.1,72.0
+FL,Orange County,12095,1450798,10.7,31.1,11.2,16.1,12.2,22.4,70.9
+
