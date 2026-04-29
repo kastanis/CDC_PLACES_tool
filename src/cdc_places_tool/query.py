@@ -4,6 +4,10 @@ from cdc_places_tool.data import place_label
 from cdc_places_tool.semantic import Measure, SemanticLayer
 
 
+def has_numeric_value(row: dict, column: str) -> bool:
+    return isinstance(row.get(column), int | float)
+
+
 def rank(
     rows: list[dict],
     layer: SemanticLayer,
@@ -14,6 +18,7 @@ def rank(
 ) -> dict:
     measure = layer.get_measure(measure_id)
     filtered = [row for row in rows if state is None or row["state"].lower() == state.lower()]
+    filtered = [row for row in filtered if has_numeric_value(row, measure.column)]
     ranked = sorted(filtered, key=lambda row: row[measure.column], reverse=descending)[:limit]
     direction = "Highest" if descending else "Lowest"
     return {
@@ -27,7 +32,7 @@ def rank(
 def compare(rows: list[dict], layer: SemanticLayer, measure_id: str, places: list[str]) -> dict:
     measure = layer.get_measure(measure_id)
     wanted = {place.lower() for place in places}
-    matched = [row for row in rows if place_label(row).lower() in wanted]
+    matched = [row for row in rows if place_label(row).lower() in wanted and has_numeric_value(row, measure.column)]
     return {
         "operation": "compare",
         "measure": measure,
@@ -44,6 +49,8 @@ def summarize(rows: list[dict], layer: SemanticLayer, place: str) -> dict:
     row = matches[0]
     values = []
     for measure in layer.measures.values():
+        if not has_numeric_value(row, measure.column):
+            continue
         values.append((measure, row[measure.column]))
     values.sort(key=lambda item: item[1], reverse=True)
     return {

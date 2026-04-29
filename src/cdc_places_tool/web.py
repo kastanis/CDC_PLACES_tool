@@ -173,7 +173,11 @@ def make_handler(rows: list[dict], layer: SemanticLayer) -> type[BaseHTTPRequest
             self.answer_question(str(payload.get("question", "")))
 
         def answer_question(self, question: str) -> None:
-            routed = route_question(question, rows, layer)
+            try:
+                routed = route_question(question, rows, layer)
+            except Exception as exc:
+                self.send_json({"ok": False, "answer": f"Sorry, that question hit an internal error: {exc}"})
+                return
             log_question(
                 question=question,
                 ok=routed.ok,

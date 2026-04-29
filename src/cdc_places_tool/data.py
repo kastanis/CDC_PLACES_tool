@@ -17,6 +17,9 @@ def load_rows(path: Path = DEFAULT_DATA_PATH) -> list[dict]:
         for key, value in list(row.items()):
             if key in {"state", "county", "geoid"}:
                 continue
+            if value == "":
+                row[key] = None
+                continue
             try:
                 row[key] = float(value)
             except ValueError:

@@ -19,6 +19,17 @@ def test_rank_can_sort_lowest_first():
     assert result["rows"][0]["diabetes"] <= result["rows"][1]["diabetes"]
 
 
+def test_rank_skips_missing_values():
+    rows = [
+        {"state": "CA", "county": "Alpha County", "geoid": "1", "diabetes": ""},
+        {"state": "CA", "county": "Beta County", "geoid": "2", "diabetes": 8.2},
+    ]
+    layer = load_semantic_layer()
+    result = rank(rows, layer, "diabetes", state="CA")
+    assert len(result["rows"]) == 1
+    assert result["rows"][0]["county"] == "Beta County"
+
+
 def test_compare_matches_places():
     rows = load_rows()
     layer = load_semantic_layer()

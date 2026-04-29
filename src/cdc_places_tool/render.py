@@ -73,7 +73,9 @@ def print_cautions(layer: SemanticLayer, measure: Measure | None) -> None:
         console.print(f"- {caveat}")
 
 
-def format_value(value: float, measure: Measure) -> str:
+def format_value(value: float | None, measure: Measure) -> str:
+    if value is None:
+        return "Not available"
     if measure.unit == "percent":
         return f"{value:.1f}%"
     return f"{value:g} {measure.unit}"
