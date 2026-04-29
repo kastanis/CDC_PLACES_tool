@@ -27,3 +27,14 @@ The file keeps a reporter-friendly schema for the prototype:
 | `annual_checkup` | `checkup_crudeprev` |
 
 These are modeled prevalence estimates. The sample is useful for building and testing the semantic layer, but it is not a substitute for the full PLACES dataset.
+
+Run this command to fetch all county rows for the currently modeled semantic measures:
+
+```bash
+places fetch-counties
+```
+
+That command writes:
+
+- `data/places_county_current.csv`
+- `data/places_county_current_metadata.json`

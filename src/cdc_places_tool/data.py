@@ -5,7 +5,9 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_DATA_PATH = ROOT / "data" / "sample_places_county.csv"
+FULL_DATA_PATH = ROOT / "data" / "places_county_current.csv"
+SAMPLE_DATA_PATH = ROOT / "data" / "sample_places_county.csv"
+DEFAULT_DATA_PATH = FULL_DATA_PATH if FULL_DATA_PATH.exists() else SAMPLE_DATA_PATH
 
 
 def load_rows(path: Path = DEFAULT_DATA_PATH) -> list[dict]:
@@ -24,4 +26,3 @@ def load_rows(path: Path = DEFAULT_DATA_PATH) -> list[dict]:
 
 def place_label(row: dict) -> str:
     return f"{row['county']}, {row['state']}"
-

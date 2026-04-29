@@ -1,6 +1,6 @@
 dataset:
-  id: cdc_places_county_gis_2025_sample
-  name: CDC PLACES county GIS-friendly 2025 release sample
+  id: cdc_places_county_gis_2025
+  name: CDC PLACES county GIS-friendly 2025 release
   grain: county
   geography_label: county
   source: CDC PLACES County Data (GIS Friendly Format), 2025 release
@@ -8,7 +8,7 @@ dataset:
   fetched_on: 2026-04-29
   default_caveats:
     - CDC PLACES values are modeled estimates, not direct local counts.
-    - This repo includes a small sample extract, not the full national PLACES dataset.
+    - Confirm whether the tool is using the full local import or the sample fallback before publishing.
     - Avoid causal claims unless supported by additional reporting.
     - Rankings should be treated as reporting leads, not final conclusions.
     - Pair estimates with local interviews, health access context, and demographic context.

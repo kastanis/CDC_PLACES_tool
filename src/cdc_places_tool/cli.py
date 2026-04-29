@@ -5,15 +5,20 @@ from pathlib import Path
 import click
 
 from cdc_places_tool.data import load_rows
+from cdc_places_tool.importer import fetch_county_data
 from cdc_places_tool.query import compare, rank, summarize
 from cdc_places_tool.render import (
+    measure_to_text,
     print_compare_result,
     print_measure_explanation,
     print_measure_list,
     print_rank_result,
     print_summary_result,
+    result_to_text,
 )
+from cdc_places_tool.router import route_question
 from cdc_places_tool.semantic import load_semantic_layer
+from cdc_places_tool.web import run_server
 
 
 @click.group()
@@ -39,10 +44,11 @@ def list_measures(ctx: click.Context) -> None:
 @click.option("--measure", "-m", required=True, help="Semantic measure ID, e.g. diabetes")
 @click.option("--state", "-s", default=None, help="Optional state abbreviation")
 @click.option("--limit", "-n", default=10, show_default=True, help="Number of rows")
+@click.option("--lowest", is_flag=True, help="Show the lowest values instead of highest")
 @click.pass_context
-def rank_cmd(ctx: click.Context, measure: str, state: str | None, limit: int) -> None:
+def rank_cmd(ctx: click.Context, measure: str, state: str | None, limit: int, lowest: bool) -> None:
     """Rank places by a measure."""
-    result = rank(ctx.obj["rows"], ctx.obj["layer"], measure, state=state, limit=limit)
+    result = rank(ctx.obj["rows"], ctx.obj["layer"], measure, state=state, limit=limit, descending=not lowest)
     print_rank_result(result, ctx.obj["layer"])
 
 
@@ -72,6 +78,40 @@ def explain(ctx: click.Context, measure: str) -> None:
     """Explain what a measure means and how to use it safely."""
     layer = ctx.obj["layer"]
     print_measure_explanation(layer, layer.get_measure(measure))
+
+
+@main.command("ask")
+@click.argument("question")
+@click.pass_context
+def ask(ctx: click.Context, question: str) -> None:
+    """Route a plain-English question through approved operations."""
+    answer = route_question(question, ctx.obj["rows"], ctx.obj["layer"])
+    if not answer.ok:
+        click.echo(answer.message)
+        raise click.Abort()
+    if answer.operation == "explain" and answer.measure:
+        click.echo(measure_to_text(ctx.obj["layer"], answer.measure))
+        return
+    if answer.result:
+        click.echo(result_to_text(answer.result, ctx.obj["layer"]))
+
+
+@main.command("fetch-counties")
+def fetch_counties() -> None:
+    """Fetch all county rows for the currently modeled semantic measures."""
+    result = fetch_county_data()
+    click.echo(f"Fetched {result.row_count} rows from {result.source_name}")
+    click.echo(f"Wrote data: {result.output_path}")
+    click.echo(f"Wrote metadata: {result.metadata_path}")
+
+
+@main.command("serve")
+@click.option("--host", default="127.0.0.1", show_default=True)
+@click.option("--port", default=8765, show_default=True)
+@click.pass_context
+def serve(ctx: click.Context, host: str, port: int) -> None:
+    """Start the local reporter-facing web UI."""
+    run_server(ctx.obj["rows"], ctx.obj["layer"], host=host, port=port)
 
 
 if __name__ == "__main__":

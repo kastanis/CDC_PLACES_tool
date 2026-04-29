@@ -12,6 +12,13 @@ def test_rank_filters_state():
     assert result["rows"][0]["diabetes"] >= result["rows"][1]["diabetes"]
 
 
+def test_rank_can_sort_lowest_first():
+    rows = load_rows()
+    layer = load_semantic_layer()
+    result = rank(rows, layer, "diabetes", state="CA", limit=2, descending=False)
+    assert result["rows"][0]["diabetes"] <= result["rows"][1]["diabetes"]
+
+
 def test_compare_matches_places():
     rows = load_rows()
     layer = load_semantic_layer()
@@ -25,4 +32,3 @@ def test_summarize_place():
     result = summarize(rows, layer, "Fresno County, CA")
     assert result["place"]["county"] == "Fresno County"
     assert result["values"]
-

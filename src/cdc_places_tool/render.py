@@ -78,3 +78,58 @@ def format_value(value: float, measure: Measure) -> str:
         return f"{value:.1f}%"
     return f"{value:g} {measure.unit}"
 
+
+def result_to_text(result: dict, layer: SemanticLayer) -> str:
+    operation = result["operation"]
+    if operation == "rank":
+        return rank_to_text(result, layer)
+    if operation == "compare":
+        return compare_to_text(result, layer)
+    if operation == "summarize":
+        return summary_to_text(result, layer)
+    return "Unsupported result."
+
+
+def rank_to_text(result: dict, layer: SemanticLayer) -> str:
+    measure: Measure = result["measure"]
+    lines = [result["headline"]]
+    for index, row in enumerate(result["rows"], start=1):
+        lines.append(f"{index}. {place_label(row)}: {format_value(row[measure.column], measure)}")
+    lines.extend(caution_lines(layer, measure))
+    return "\n".join(lines)
+
+
+def compare_to_text(result: dict, layer: SemanticLayer) -> str:
+    measure: Measure = result["measure"]
+    lines = [result["headline"]]
+    for row in result["rows"]:
+        lines.append(f"- {place_label(row)}: {format_value(row[measure.column], measure)}")
+    lines.extend(caution_lines(layer, measure))
+    return "\n".join(lines)
+
+
+def summary_to_text(result: dict, layer: SemanticLayer) -> str:
+    lines = [result["headline"]]
+    for measure, value in result["values"]:
+        lines.append(f"- {measure.label}: {format_value(value, measure)}")
+    lines.append("Reporter note: Use this as a lead-finding view. Follow up with local sources and context.")
+    lines.extend(caution_lines(layer, None))
+    return "\n".join(lines)
+
+
+def measure_to_text(layer: SemanticLayer, measure: Measure) -> str:
+    lines = [
+        measure.label,
+        measure.plain_language,
+        f"Unit: {measure.unit}",
+        f"Universe: {measure.universe}",
+    ]
+    lines.extend(caution_lines(layer, measure))
+    return "\n".join(lines)
+
+
+def caution_lines(layer: SemanticLayer, measure: Measure | None) -> list[str]:
+    caveats = list(layer.default_caveats)
+    if measure:
+        caveats.extend(measure.caveats)
+    return ["", "Cautions", *[f"- {caveat}" for caveat in caveats]]

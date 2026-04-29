@@ -1,0 +1,57 @@
+{
+  "source_name": "PLACES: County Data (GIS Friendly Format), 2025 release",
+  "source_endpoint": "https://data.cdc.gov/resource/i46a-9kgh.json",
+  "metadata_endpoint": "https://data.cdc.gov/api/views/i46a-9kgh",
+  "fetched_at_utc": "2026-04-29T18:02:11.361776+00:00",
+  "row_count": 3143,
+  "columns": [
+    {
+      "source_column": "stateabbr",
+      "local_column": "state"
+    },
+    {
+      "source_column": "countyname",
+      "local_column": "county"
+    },
+    {
+      "source_column": "countyfips",
+      "local_column": "geoid"
+    },
+    {
+      "source_column": "totalpopulation",
+      "local_column": "population"
+    },
+    {
+      "source_column": "diabetes_crudeprev",
+      "local_column": "diabetes"
+    },
+    {
+      "source_column": "obesity_crudeprev",
+      "local_column": "obesity"
+    },
+    {
+      "source_column": "csmoking_crudeprev",
+      "local_column": "smoking"
+    },
+    {
+      "source_column": "mhlth_crudeprev",
+      "local_column": "poor_mental_health"
+    },
+    {
+      "source_column": "access2_crudeprev",
+      "local_column": "uninsured"
+    },
+    {
+      "source_column": "lpa_crudeprev",
+      "local_column": "physical_inactivity"
+    },
+    {
+      "source_column": "checkup_crudeprev",
+      "local_column": "annual_checkup"
+    }
+  ],
+  "notes": [
+    "Values are modeled CDC PLACES prevalence estimates, not direct local counts.",
+    "This import keeps only the measures currently defined in semantic/measures.yaml."
+  ]
+}
