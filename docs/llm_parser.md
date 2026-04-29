@@ -43,7 +43,7 @@ Optional environment variables:
 ```text
 OLLAMA_URL=http://localhost:11434
 OLLAMA_MODEL=llama3.2
-OLLAMA_TIMEOUT=20
+OLLAMA_TIMEOUT=60
 ```
 
 ## Hosted OpenAI Parser

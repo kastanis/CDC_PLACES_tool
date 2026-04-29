@@ -69,6 +69,7 @@ def test_parse_question_with_ollama_payload(monkeypatch):
 
     monkeypatch.setenv("OLLAMA_URL", "http://localhost:11434")
     monkeypatch.setenv("OLLAMA_MODEL", "test-model")
+    monkeypatch.setenv("OLLAMA_TIMEOUT", "20")
     monkeypatch.setattr("cdc_places_tool.llm_parser.urlopen", fake_urlopen)
     monkeypatch.setattr("cdc_places_tool.llm_parser.json.load", fake_json_load)
 
@@ -79,6 +80,7 @@ def test_parse_question_with_ollama_payload(monkeypatch):
     assert captured["payload"]["model"] == "test-model"
     assert captured["payload"]["stream"] is False
     assert captured["payload"]["format"] == "json"
+    assert "Use operation=rank" in captured["payload"]["messages"][0]["content"]
     assert intent.measure_id == "diabetes"
 
 

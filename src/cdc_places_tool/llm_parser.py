@@ -7,6 +7,7 @@ import os
 from dataclasses import dataclass
 from urllib.request import Request, urlopen
 
+from cdc_places_tool.feedback import load_local_env
 from cdc_places_tool.semantic import SemanticLayer
 
 
@@ -79,6 +80,7 @@ class ParsedIntent:
 
 
 def parse_question_with_ollama(question: str, layer: SemanticLayer) -> ParsedIntent:
+    load_local_env()
     url = os.getenv("OLLAMA_URL", DEFAULT_OLLAMA_URL).rstrip("/")
     model = os.getenv("OLLAMA_MODEL", DEFAULT_OLLAMA_MODEL)
     payload = {
@@ -97,13 +99,14 @@ def parse_question_with_ollama(question: str, layer: SemanticLayer) -> ParsedInt
         headers={"Content-Type": "application/json"},
         method="POST",
     )
-    with urlopen(request, timeout=float(os.getenv("OLLAMA_TIMEOUT", "20"))) as response:
+    with urlopen(request, timeout=float(os.getenv("OLLAMA_TIMEOUT", "60"))) as response:
         response_payload = json.load(response)
     content = response_payload.get("message", {}).get("content", "{}")
     return intent_from_json(content)
 
 
 def parse_question_with_openai(question: str, layer: SemanticLayer) -> ParsedIntent:
+    load_local_env()
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
         raise RuntimeError("OPENAI_API_KEY is required for the OpenAI parser.")
@@ -149,6 +152,10 @@ def build_system_prompt(layer: SemanticLayer) -> str:
         "You do not answer the question. Return only JSON with these keys: "
         "operation, measure_id, state, direction, limit, confidence. "
         "operation must be one of rank, compare, summarize, explain, unsupported. "
+        "Use operation=rank for questions asking which counties have the highest, lowest, top, worst, or best values. "
+        "Use operation=compare only when the user names at least two specific places to compare. "
+        "Use operation=summarize only when the user asks for a profile or overview of one specific place. "
+        "Use operation=explain only when the user asks what a measure means. "
         "direction must be highest, lowest, or unknown. "
         "state must be a two-letter US postal abbreviation, or unknown when the user asks across all counties. "
         "measure_id must be one of the known measure ids, or unknown. "
