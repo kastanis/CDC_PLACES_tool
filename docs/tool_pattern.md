@@ -57,6 +57,12 @@ The tool logs questions locally to:
 logs/questions.jsonl
 ```
 
+For shared deployments, the same feedback interface can write to Supabase by setting:
+
+```text
+FEEDBACK_BACKEND=supabase
+```
+
 Each row includes:
 
 - timestamp

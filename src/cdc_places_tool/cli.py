@@ -5,7 +5,7 @@ from pathlib import Path
 import click
 
 from cdc_places_tool.data import load_rows
-from cdc_places_tool.feedback import log_question, summarize_question_log
+from cdc_places_tool.feedback import feedback_backend, log_question, summarize_question_log, supabase_config
 from cdc_places_tool.importer import fetch_county_data
 from cdc_places_tool.query import compare, rank, summarize
 from cdc_places_tool.render import (
@@ -139,6 +139,21 @@ def feedback_summary() -> None:
         click.echo("\nRecent refusals:")
         for entry in summary["recent_refusals"]:
             click.echo(f"- {entry.question} -> {entry.message}")
+
+
+@main.command("feedback-status")
+def feedback_status() -> None:
+    """Show which feedback backend is configured."""
+    backend = feedback_backend()
+    click.echo(f"Feedback backend: {backend}")
+    if backend == "supabase":
+        try:
+            url, _, table = supabase_config()
+        except RuntimeError as exc:
+            click.echo(f"Supabase config: missing ({exc})")
+            return
+        click.echo(f"Supabase URL: {url}")
+        click.echo(f"Supabase table: {table}")
 
 
 if __name__ == "__main__":
