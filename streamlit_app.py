@@ -23,6 +23,11 @@ from cdc_places_tool.semantic import Measure, load_semantic_layer
 
 
 def load_streamlit_secrets() -> None:
+    try:
+        secrets = st.secrets
+        _ = secrets.keys()
+    except Exception:
+        return
     for key in [
         "FEEDBACK_BACKEND",
         "SUPABASE_URL",
@@ -32,7 +37,7 @@ def load_streamlit_secrets() -> None:
         "APP_VERSION",
     ]:
         try:
-            value = st.secrets[key]
+            value = secrets[key]
         except KeyError:
             continue
         os.environ.setdefault(key, str(value))
