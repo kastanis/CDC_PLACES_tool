@@ -12,6 +12,8 @@ from cdc_places_tool.semantic import SemanticLayer
 
 DEFAULT_OLLAMA_URL = "http://localhost:11434"
 DEFAULT_OLLAMA_MODEL = "llama3.2"
+DEFAULT_OPENAI_MODEL = "gpt-4o-mini"
+DEFAULT_XAI_MODEL = "grok-4.20"
 
 
 @dataclass(frozen=True)
@@ -49,6 +51,69 @@ def parse_question_with_ollama(question: str, layer: SemanticLayer) -> ParsedInt
     return intent_from_json(content)
 
 
+def parse_question_with_openai(question: str, layer: SemanticLayer) -> ParsedIntent:
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        raise RuntimeError("OPENAI_API_KEY is required for the OpenAI parser.")
+    model = os.getenv("OPENAI_MODEL", DEFAULT_OPENAI_MODEL)
+    payload = {
+        "model": model,
+        "input": [
+            {"role": "system", "content": build_system_prompt(layer)},
+            {"role": "user", "content": question},
+        ],
+        "text": {
+            "format": {
+                "type": "json_schema",
+                "name": "places_intent",
+                "strict": True,
+                "schema": intent_schema(layer),
+            }
+        },
+    }
+    request = Request(
+        "https://api.openai.com/v1/responses",
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+        method="POST",
+    )
+    with urlopen(request, timeout=float(os.getenv("OPENAI_TIMEOUT", "30"))) as response:
+        response_payload = json.load(response)
+    return intent_from_json(extract_model_text(response_payload))
+
+
+def parse_question_with_xai(question: str, layer: SemanticLayer) -> ParsedIntent:
+    api_key = os.getenv("XAI_API_KEY")
+    if not api_key:
+        raise RuntimeError("XAI_API_KEY is required for the xAI parser.")
+    model = os.getenv("XAI_MODEL", DEFAULT_XAI_MODEL)
+    payload = {
+        "model": model,
+        "stream": False,
+        "messages": [
+            {"role": "system", "content": build_system_prompt(layer)},
+            {"role": "user", "content": question},
+        ],
+        "response_format": {
+            "type": "json_schema",
+            "json_schema": {
+                "name": "places_intent",
+                "strict": True,
+                "schema": intent_schema(layer),
+            },
+        },
+    }
+    request = Request(
+        "https://api.x.ai/v1/chat/completions",
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+        method="POST",
+    )
+    with urlopen(request, timeout=float(os.getenv("XAI_TIMEOUT", "30"))) as response:
+        response_payload = json.load(response)
+    return intent_from_json(extract_model_text(response_payload))
+
+
 def build_system_prompt(layer: SemanticLayer) -> str:
     measures = [
         {
@@ -73,6 +138,48 @@ def build_system_prompt(layer: SemanticLayer) -> str:
     )
 
 
+def intent_schema(layer: SemanticLayer) -> dict:
+    measure_ids = [*layer.measures.keys(), "unknown"]
+    return {
+        "type": "object",
+        "additionalProperties": False,
+        "properties": {
+            "operation": {
+                "type": "string",
+                "enum": ["rank", "compare", "summarize", "explain", "unsupported"],
+            },
+            "measure_id": {"type": "string", "enum": measure_ids},
+            "state": {
+                "type": "string",
+                "description": "Two-letter US state abbreviation, or unknown.",
+            },
+            "direction": {"type": "string", "enum": ["highest", "lowest", "unknown"]},
+            "limit": {"type": "integer"},
+            "confidence": {"type": "string", "enum": ["high", "medium", "low"]},
+        },
+        "required": ["operation", "measure_id", "state", "direction", "limit", "confidence"],
+    }
+
+
+def extract_model_text(payload: dict) -> str:
+    if isinstance(payload.get("output_text"), str):
+        return payload["output_text"]
+    if payload.get("choices"):
+        message = payload["choices"][0].get("message", {})
+        content = message.get("content")
+        if isinstance(content, str):
+            return content
+        if isinstance(content, list):
+            for item in content:
+                if isinstance(item, dict) and isinstance(item.get("text"), str):
+                    return item["text"]
+    for item in payload.get("output", []):
+        for content in item.get("content", []):
+            if isinstance(content.get("text"), str):
+                return content["text"]
+    return "{}"
+
+
 def intent_from_json(content: str) -> ParsedIntent:
     try:
         payload = json.loads(content)
@@ -92,6 +199,8 @@ def clean_string(value: object) -> str | None:
     if not isinstance(value, str):
         return None
     value = value.strip()
+    if value.lower() == "unknown":
+        return None
     return value or None
 
 

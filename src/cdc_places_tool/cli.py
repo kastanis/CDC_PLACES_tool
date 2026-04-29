@@ -84,7 +84,7 @@ def explain(ctx: click.Context, measure: str) -> None:
 @main.command("ask")
 @click.option(
     "--parser",
-    type=click.Choice(["rules", "ollama", "auto"]),
+    type=click.Choice(["rules", "ollama", "openai", "xai", "auto"]),
     default="rules",
     show_default=True,
     help="Question parser to use",
@@ -170,6 +170,10 @@ def llm_status() -> None:
 
     click.echo(f"Ollama URL: {os.getenv('OLLAMA_URL', 'http://localhost:11434')}")
     click.echo(f"Ollama model: {os.getenv('OLLAMA_MODEL', 'llama3.2')}")
+    click.echo(f"OpenAI model: {os.getenv('OPENAI_MODEL', 'gpt-4o-mini')}")
+    click.echo(f"OpenAI key configured: {'yes' if os.getenv('OPENAI_API_KEY') else 'no'}")
+    click.echo(f"xAI model: {os.getenv('XAI_MODEL', 'grok-4.20')}")
+    click.echo(f"xAI key configured: {'yes' if os.getenv('XAI_API_KEY') else 'no'}")
 
 
 if __name__ == "__main__":

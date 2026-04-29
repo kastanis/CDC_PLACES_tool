@@ -36,6 +36,15 @@ DATASET_ID = "cdc_places_county_gis_2025"
 APP_VERSION = "streamlit"
 ```
 
+Optional hosted parser secrets:
+
+```toml
+OPENAI_API_KEY = "your-openai-key"
+OPENAI_MODEL = "gpt-4o-mini"
+XAI_API_KEY = "your-xai-key"
+XAI_MODEL = "grok-4.20"
+```
+
 For local Streamlit development, copy `.streamlit/secrets.toml.example` to `.streamlit/secrets.toml` and fill in the same values.
 
 Do not commit `.streamlit/secrets.toml`.

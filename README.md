@@ -140,6 +140,15 @@ The LLM only parses the question into structured intent. The semantic layer stil
 
 Use `--parser auto` to try Ollama first and fall back to rules if the local model is unavailable.
 
+If you have hosted API keys, you can also use:
+
+```bash
+places ask --parser openai "Show me where insurance access looks worst in California"
+places ask --parser xai "Show me where insurance access looks worst in California"
+```
+
+Those modes use API credits, so keep keys in `.env` or Streamlit secrets, never in Git.
+
 ## Feedback Loop
 
 Plain-English questions are logged locally to `logs/questions.jsonl` by default, which is ignored by Git. The log records the question, whether it was answered, the matched operation, the matched measure, and any refusal message. It does not record names, emails, IP addresses, or browser identifiers.

@@ -78,3 +78,27 @@ def test_routes_with_ollama_parser(monkeypatch):
     assert answer.ok
     assert answer.operation == "rank"
     assert len(answer.result["rows"]) == 3
+
+
+def test_routes_with_openai_parser(monkeypatch):
+    from cdc_places_tool.llm_parser import ParsedIntent
+
+    def fake_parse(question, layer):
+        return ParsedIntent(
+            operation="explain",
+            measure_id="poor_mental_health",
+            state=None,
+            direction=None,
+            limit=None,
+        )
+
+    monkeypatch.setattr("cdc_places_tool.router.parse_question_with_openai", fake_parse)
+    answer = route_question(
+        "what is the mental health measure",
+        load_rows(),
+        load_semantic_layer(),
+        parser="openai",
+    )
+    assert answer.ok
+    assert answer.operation == "explain"
+    assert answer.measure.id == "poor_mental_health"
