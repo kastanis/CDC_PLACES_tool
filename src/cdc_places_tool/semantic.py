@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 from pathlib import Path
+import re
 
 import yaml
 
@@ -35,12 +36,17 @@ class SemanticLayer:
     def get_measure(self, measure_id: str) -> Measure:
         if measure_id in self.measures:
             return self.measures[measure_id]
-        normalized = measure_id.lower().strip()
+        normalized = normalize_term(measure_id)
         for measure in self.measures.values():
             terms = [measure.id, measure.label, *measure.synonyms]
-            if normalized in {term.lower() for term in terms}:
+            if normalized in {normalize_term(term) for term in terms}:
                 return measure
         raise KeyError(f"Unknown measure: {measure_id}")
+
+
+def normalize_term(value: str) -> str:
+    normalized = value.lower().replace("_", " ").replace("-", " ")
+    return re.sub(r"\s+", " ", normalized).strip()
 
 
 def load_semantic_layer(path: Path = DEFAULT_SEMANTIC_PATH) -> SemanticLayer:
@@ -59,4 +65,3 @@ def load_semantic_layer(path: Path = DEFAULT_SEMANTIC_PATH) -> SemanticLayer:
             caveats=item.get("caveats", []),
         )
     return SemanticLayer(dataset=raw["dataset"], measures=measures)
-

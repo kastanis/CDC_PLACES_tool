@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from cdc_places_tool.data import place_label
 from cdc_places_tool.guardrails import check_question
 from cdc_places_tool.query import compare, rank, summarize
-from cdc_places_tool.semantic import Measure, SemanticLayer
+from cdc_places_tool.semantic import Measure, SemanticLayer, normalize_term
 
 
 STATE_NAMES = {
@@ -121,12 +121,12 @@ def route_question(question: str, rows: list[dict], layer: SemanticLayer) -> Rou
 
 
 def find_measure(question: str, layer: SemanticLayer) -> Measure | None:
-    normalized = question.lower()
+    normalized = normalize_term(question)
     candidates: list[tuple[int, Measure]] = []
     for measure in layer.measures.values():
-        terms = [measure.id.replace("_", " "), measure.label, *measure.synonyms]
+        terms = [measure.id, measure.label, *measure.synonyms]
         for term in terms:
-            term_norm = term.lower()
+            term_norm = normalize_term(term)
             if term_norm and term_norm in normalized:
                 candidates.append((len(term_norm), measure))
     if not candidates:
@@ -187,4 +187,4 @@ def wants_explanation(normalized: str) -> bool:
 
 
 def normalize_text(value: str) -> str:
-    return re.sub(r"\s+", " ", value.lower().replace("-", " ")).strip()
+    return normalize_term(value)

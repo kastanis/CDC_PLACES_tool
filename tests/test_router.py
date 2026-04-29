@@ -43,3 +43,14 @@ def test_routes_lowest_question():
     )
     assert answer.ok
     assert answer.result["headline"].startswith("Lowest")
+
+
+def test_routes_explain_with_underscored_measure():
+    answer = route_question(
+        "explain poor_mental_health",
+        load_rows(),
+        load_semantic_layer(),
+    )
+    assert answer.ok
+    assert answer.operation == "explain"
+    assert answer.measure.id == "poor_mental_health"
