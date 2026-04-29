@@ -54,3 +54,27 @@ def test_routes_explain_with_underscored_measure():
     assert answer.ok
     assert answer.operation == "explain"
     assert answer.measure.id == "poor_mental_health"
+
+
+def test_routes_with_ollama_parser(monkeypatch):
+    from cdc_places_tool.llm_parser import ParsedIntent
+
+    def fake_parse(question, layer):
+        return ParsedIntent(
+            operation="rank",
+            measure_id="uninsured",
+            state="CA",
+            direction="highest",
+            limit=3,
+        )
+
+    monkeypatch.setattr("cdc_places_tool.router.parse_question_with_ollama", fake_parse)
+    answer = route_question(
+        "show me the insurance problem in california",
+        load_rows(),
+        load_semantic_layer(),
+        parser="ollama",
+    )
+    assert answer.ok
+    assert answer.operation == "rank"
+    assert len(answer.result["rows"]) == 3

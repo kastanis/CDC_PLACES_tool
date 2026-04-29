@@ -7,6 +7,7 @@ from dataclasses import dataclass
 
 from cdc_places_tool.data import place_label
 from cdc_places_tool.guardrails import check_question
+from cdc_places_tool.llm_parser import ParsedIntent, parse_question_with_ollama
 from cdc_places_tool.query import compare, rank, summarize
 from cdc_places_tool.semantic import Measure, SemanticLayer, normalize_term
 
@@ -75,10 +76,26 @@ class RoutedAnswer:
     measure: Measure | None = None
 
 
-def route_question(question: str, rows: list[dict], layer: SemanticLayer) -> RoutedAnswer:
+def route_question(
+    question: str,
+    rows: list[dict],
+    layer: SemanticLayer,
+    parser: str = "rules",
+) -> RoutedAnswer:
     allowed, guardrail_message = check_question(question)
     if not allowed:
         return RoutedAnswer(ok=False, message=guardrail_message or "Unsupported question.")
+
+    if parser in {"ollama", "auto"}:
+        try:
+            intent = parse_question_with_ollama(question, layer)
+            return route_intent(question, rows, layer, intent)
+        except Exception as exc:
+            if parser == "ollama":
+                return RoutedAnswer(
+                    ok=False,
+                    message=f"LLM parser unavailable. Is Ollama running with the configured model? ({exc})",
+                )
 
     measure = find_measure(question, layer)
     places = find_places(question, rows)
@@ -118,6 +135,56 @@ def route_question(question: str, rows: list[dict], layer: SemanticLayer) -> Rou
         False,
         "I can rank, compare, summarize a place, or explain a measure. Try asking: Which California counties have the highest uninsured rates?",
     )
+
+
+def route_intent(question: str, rows: list[dict], layer: SemanticLayer, intent: ParsedIntent) -> RoutedAnswer:
+    operation = intent.operation
+    if operation == "unsupported" or operation is None:
+        return route_question(question, rows, layer, parser="rules")
+
+    measure = None
+    if intent.measure_id:
+        try:
+            measure = layer.get_measure(intent.measure_id)
+        except KeyError:
+            measure = find_measure(question, layer)
+    else:
+        measure = find_measure(question, layer)
+
+    places = find_places(question, rows)
+    state = intent.state or find_state(question)
+
+    try:
+        if operation == "explain":
+            if not measure:
+                return RoutedAnswer(False, "I need a measure to explain. Try: explain uninsured.")
+            return RoutedAnswer(True, f"Explaining {measure.label}.", "explain", measure=measure)
+
+        if operation == "summarize":
+            if places:
+                result = summarize(rows, layer, places[0])
+                return RoutedAnswer(True, result["headline"], "summarize", result, measure)
+            return RoutedAnswer(False, "I need a place to summarize. Try: summarize Fresno County, CA.")
+
+        if operation == "compare":
+            if not measure:
+                return RoutedAnswer(False, "I need a measure for the comparison.")
+            if len(places) < 2:
+                return RoutedAnswer(False, "I need at least two places to compare.")
+            result = compare(rows, layer, measure.id, places)
+            return RoutedAnswer(True, result["headline"], "compare", result, measure)
+
+        if operation == "rank":
+            if not measure:
+                return RoutedAnswer(False, "I need a measure to rank.")
+            limit = intent.limit or find_limit(question)
+            descending = intent.direction != "lowest"
+            result = rank(rows, layer, measure.id, state=state, limit=limit, descending=descending)
+            return RoutedAnswer(True, result["headline"], "rank", result, measure)
+    except (KeyError, ValueError) as exc:
+        return RoutedAnswer(False, str(exc))
+
+    return route_question(question, rows, layer, parser="rules")
 
 
 def find_measure(question: str, layer: SemanticLayer) -> Measure | None:

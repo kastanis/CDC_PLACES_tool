@@ -165,13 +165,24 @@ def main() -> None:
     )
 
     with ask_tab:
+        parser_label = st.radio(
+            "Parser",
+            ["Rules", "Local LLM via Ollama", "Auto fallback"],
+            horizontal=True,
+            help="The LLM only parses intent JSON. The semantic layer still validates and executes the query.",
+        )
+        parser = {
+            "Rules": "rules",
+            "Local LLM via Ollama": "ollama",
+            "Auto fallback": "auto",
+        }[parser_label]
         question = st.text_area(
             "Plain-English question",
             value="Which California counties have the highest uninsured rates?",
             height=110,
         )
         if st.button("Ask", type="primary"):
-            answer = route_question(question, rows, layer)
+            answer = route_question(question, rows, layer, parser=parser)
             log_routed_question(question, answer)
             if not answer.ok:
                 st.warning(answer.message)

@@ -66,6 +66,12 @@ Ask a plain-English question:
 places ask "Which California counties have the highest uninsured rates?"
 ```
 
+Ask with the optional local LLM parser:
+
+```bash
+places ask --parser ollama "Show me where insurance access looks worst in California"
+```
+
 Fetch the current county data for the modeled semantic measures:
 
 ```bash
@@ -119,6 +125,20 @@ The plain-English router only maps questions into approved semantic operations:
 - `explain`
 
 It refuses questions that ask for causal claims, forecasts, arbitrary statistical modeling, SQL, or people counts derived from prevalence estimates.
+
+## Optional LLM Parser
+
+The default parser is rule-based. You can optionally use a free local LLM through Ollama:
+
+```bash
+ollama pull llama3.2
+ollama serve
+places ask --parser ollama "Show me where insurance access looks worst in California"
+```
+
+The LLM only parses the question into structured intent. The semantic layer still validates measures, operations, units, and caveats before anything runs.
+
+Use `--parser auto` to try Ollama first and fall back to rules if the local model is unavailable.
 
 ## Feedback Loop
 

@@ -29,6 +29,7 @@ Reusable pieces:
 - semantic layer loading
 - rank/compare/summarize/explain query pattern
 - plain-English router structure
+- optional LLM intent parser
 - guardrail structure
 - local web UI structure
 - Streamlit app shell

@@ -82,11 +82,18 @@ def explain(ctx: click.Context, measure: str) -> None:
 
 
 @main.command("ask")
+@click.option(
+    "--parser",
+    type=click.Choice(["rules", "ollama", "auto"]),
+    default="rules",
+    show_default=True,
+    help="Question parser to use",
+)
 @click.argument("question")
 @click.pass_context
-def ask(ctx: click.Context, question: str) -> None:
+def ask(ctx: click.Context, parser: str, question: str) -> None:
     """Route a plain-English question through approved operations."""
-    answer = route_question(question, ctx.obj["rows"], ctx.obj["layer"])
+    answer = route_question(question, ctx.obj["rows"], ctx.obj["layer"], parser=parser)
     log_question(
         question=question,
         ok=answer.ok,
@@ -154,6 +161,15 @@ def feedback_status() -> None:
             return
         click.echo(f"Supabase URL: {url}")
         click.echo(f"Supabase table: {table}")
+
+
+@main.command("llm-status")
+def llm_status() -> None:
+    """Show local LLM parser configuration."""
+    import os
+
+    click.echo(f"Ollama URL: {os.getenv('OLLAMA_URL', 'http://localhost:11434')}")
+    click.echo(f"Ollama model: {os.getenv('OLLAMA_MODEL', 'llama3.2')}")
 
 
 if __name__ == "__main__":
