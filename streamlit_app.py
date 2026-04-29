@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import sys
+from collections import Counter
 from pathlib import Path
 
 import streamlit as st
@@ -78,7 +79,7 @@ def render_rank_table(result: dict) -> None:
         for index, row in enumerate(result["rows"], start=1)
     ]
     st.subheader(result["headline"])
-    st.dataframe(rows, hide_index=True, use_container_width=True)
+    st.dataframe(rows, hide_index=True, width="stretch")
 
 
 def render_compare_table(result: dict) -> None:
@@ -91,7 +92,7 @@ def render_compare_table(result: dict) -> None:
         for row in result["rows"]
     ]
     st.subheader(result["headline"])
-    st.dataframe(rows, hide_index=True, use_container_width=True)
+    st.dataframe(rows, hide_index=True, width="stretch")
 
 
 def render_summary_table(result: dict) -> None:
@@ -104,7 +105,7 @@ def render_summary_table(result: dict) -> None:
         for measure, value in result["values"]
     ]
     st.subheader(result["headline"])
-    st.dataframe(rows, hide_index=True, use_container_width=True)
+    st.dataframe(rows, hide_index=True, width="stretch")
 
 
 def render_cautions(layer, measure: Measure | None = None) -> None:
@@ -127,7 +128,7 @@ def render_feedback_summary() -> None:
     st.dataframe(
         [{"Operation": operation, "Count": count} for operation, count in summary["operations"]],
         hide_index=True,
-        use_container_width=True,
+        width="stretch",
     )
 
     if summary["recent_refusals"]:
@@ -138,8 +139,54 @@ def render_feedback_summary() -> None:
                 for entry in summary["recent_refusals"]
             ],
             hide_index=True,
-            use_container_width=True,
+            width="stretch",
         )
+
+
+def state_coverage(rows: list[dict]) -> list[dict]:
+    counts = Counter(row["state"] for row in rows)
+    return [
+        {"State": state, "County rows": count}
+        for state, count in sorted(counts.items())
+    ]
+
+
+def measure_catalog(measures: list[Measure]) -> list[dict]:
+    return [
+        {
+            "Measure ID": measure.id,
+            "Label": measure.label,
+            "Universe": measure.universe,
+            "Plain language": measure.plain_language,
+        }
+        for measure in measures
+    ]
+
+
+def render_sidebar(rows: list[dict], layer, measures: list[Measure]) -> None:
+    coverage = state_coverage(rows)
+    st.header("Dataset")
+    st.write(layer.dataset.get("name", "CDC PLACES"))
+    st.write(f"Rows loaded: {len(rows):,}")
+    st.write(f"Feedback backend: `{feedback_backend()}`")
+
+    with st.expander("Geographic coverage", expanded=True):
+        st.write(f"{len(coverage)} states/areas")
+        st.write(f"{len({place_label(row) for row in rows}):,} county-level places")
+        st.dataframe(coverage, hide_index=True, width="stretch", height=260)
+
+    with st.expander("Data variables you can ask about", expanded=True):
+        st.dataframe(measure_catalog(measures), hide_index=True, width="stretch", height=320)
+
+    with st.expander("Question patterns", expanded=False):
+        st.write("- Which counties have the highest uninsured rate?")
+        st.write("- Which California counties have the lowest diabetes rates?")
+        st.write("- Compare Fresno County, CA and Los Angeles County, CA on poor mental health.")
+        st.write("- Summarize Harris County, TX.")
+        st.write("- Explain uninsured.")
+
+    st.divider()
+    st.write("Allowed operations: rank, compare, summarize, explain.")
 
 
 def main() -> None:
@@ -158,12 +205,7 @@ def main() -> None:
     )
 
     with st.sidebar:
-        st.header("Dataset")
-        st.write(layer.dataset.get("name", "CDC PLACES"))
-        st.write(f"Rows loaded: {len(rows):,}")
-        st.write(f"Feedback backend: `{feedback_backend()}`")
-        st.divider()
-        st.write("Allowed operations: rank, compare, summarize, explain.")
+        render_sidebar(rows, layer, measures)
 
     ask_tab, rank_tab, compare_tab, explain_tab, feedback_tab = st.tabs(
         ["Ask", "Rank", "Compare", "Explain", "Feedback"]
