@@ -1,12 +1,14 @@
 dataset:
-  id: cdc_places_county_sample
-  name: CDC PLACES county sample
+  id: cdc_places_county_gis_2025_sample
+  name: CDC PLACES county GIS-friendly 2025 release sample
   grain: county
   geography_label: county
-  source: CDC PLACES
-  source_url: https://www.cdc.gov/places/
+  source: CDC PLACES County Data (GIS Friendly Format), 2025 release
+  source_url: https://data.cdc.gov/resource/i46a-9kgh.json
+  fetched_on: 2026-04-29
   default_caveats:
     - CDC PLACES values are modeled estimates, not direct local counts.
+    - This repo includes a small sample extract, not the full national PLACES dataset.
     - Avoid causal claims unless supported by additional reporting.
     - Rankings should be treated as reporting leads, not final conclusions.
     - Pair estimates with local interviews, health access context, and demographic context.
@@ -130,4 +132,3 @@ measures:
       - summarize
     caveats:
       - Higher checkup rates can reflect access, health status, age mix, or local care patterns.
-

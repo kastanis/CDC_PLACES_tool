@@ -56,13 +56,13 @@ places explain --measure uninsured
 
 ## Current Status
 
-This repo starts with a small sample table in `data/sample_places_county.csv` so the semantic layer and query behavior can be built before wiring in the full CDC download.
+This repo starts with a small real CDC PLACES extract in `data/sample_places_county.csv` so the semantic layer and query behavior can be built before wiring in the full national download.
 
-The sample table is development/demo data only. Do not use it for reporting.
+The sample table was fetched from the CDC PLACES county GIS-friendly 2025 release Socrata API on 2026-04-29. It is real PLACES data, but it is only a tiny subset of counties and measures.
 
 Next steps:
 
-- Add a real CDC PLACES download/import command.
+- Expand the fetch script into a full CDC PLACES download/import command.
 - Add a web UI for reporter-friendly querying.
 - Add an LLM question parser that maps plain language to approved operations.
 - Add tests for unsafe questions and caveat enforcement.
