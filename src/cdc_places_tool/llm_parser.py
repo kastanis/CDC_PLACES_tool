@@ -13,7 +13,6 @@ from cdc_places_tool.semantic import SemanticLayer
 DEFAULT_OLLAMA_URL = "http://localhost:11434"
 DEFAULT_OLLAMA_MODEL = "llama3.2"
 DEFAULT_OPENAI_MODEL = "gpt-4o-mini"
-DEFAULT_XAI_MODEL = "grok-4.20"
 
 
 @dataclass(frozen=True)
@@ -78,38 +77,6 @@ def parse_question_with_openai(question: str, layer: SemanticLayer) -> ParsedInt
         method="POST",
     )
     with urlopen(request, timeout=float(os.getenv("OPENAI_TIMEOUT", "30"))) as response:
-        response_payload = json.load(response)
-    return intent_from_json(extract_model_text(response_payload))
-
-
-def parse_question_with_xai(question: str, layer: SemanticLayer) -> ParsedIntent:
-    api_key = os.getenv("XAI_API_KEY")
-    if not api_key:
-        raise RuntimeError("XAI_API_KEY is required for the xAI parser.")
-    model = os.getenv("XAI_MODEL", DEFAULT_XAI_MODEL)
-    payload = {
-        "model": model,
-        "stream": False,
-        "messages": [
-            {"role": "system", "content": build_system_prompt(layer)},
-            {"role": "user", "content": question},
-        ],
-        "response_format": {
-            "type": "json_schema",
-            "json_schema": {
-                "name": "places_intent",
-                "strict": True,
-                "schema": intent_schema(layer),
-            },
-        },
-    }
-    request = Request(
-        "https://api.x.ai/v1/chat/completions",
-        data=json.dumps(payload).encode("utf-8"),
-        headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
-        method="POST",
-    )
-    with urlopen(request, timeout=float(os.getenv("XAI_TIMEOUT", "30"))) as response:
         response_payload = json.load(response)
     return intent_from_json(extract_model_text(response_payload))
 

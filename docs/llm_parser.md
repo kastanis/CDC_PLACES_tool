@@ -5,7 +5,6 @@ The tool has two parsing modes:
 - `rules`: deterministic parser, default
 - `ollama`: free local LLM parser
 - `openai`: hosted OpenAI parser
-- `xai`: hosted Grok/xAI parser
 - `auto`: try Ollama first, fall back to rules if unavailable
 
 The LLM does not answer questions. It only returns structured JSON intent.
@@ -57,24 +56,15 @@ places ask --parser openai "Show me where insurance access looks worst in Califo
 
 The OpenAI parser uses the Responses API with structured JSON output.
 
-## Hosted Grok/xAI Parser
-
-```bash
-export XAI_API_KEY="..."
-export XAI_MODEL="grok-4.20"
-places ask --parser xai "Show me where insurance access looks worst in California"
-```
-
-The xAI parser uses the OpenAI-compatible chat completions endpoint with structured JSON output.
-
 ## Streamlit
 
 The Streamlit app includes a parser toggle in the Ask tab:
 
 - Rules
 - Local LLM via Ollama
+- OpenAI
 - Auto fallback
 
 For Streamlit Community Cloud, local Ollama will not be available unless you run the app on infrastructure that also runs Ollama. In hosted Streamlit, use the rules parser by default.
 
-OpenAI and xAI parser modes can work in hosted Streamlit if you add the keys to Streamlit secrets. They will use API credits.
+OpenAI parser mode can work in hosted Streamlit if you add the key to Streamlit secrets. It will use API credits.

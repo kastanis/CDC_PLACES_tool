@@ -144,10 +144,9 @@ If you have hosted API keys, you can also use:
 
 ```bash
 places ask --parser openai "Show me where insurance access looks worst in California"
-places ask --parser xai "Show me where insurance access looks worst in California"
 ```
 
-Those modes use API credits, so keep keys in `.env` or Streamlit secrets, never in Git.
+That mode uses API credits, so keep keys in `.env` or Streamlit secrets, never in Git.
 
 ## Feedback Loop
 

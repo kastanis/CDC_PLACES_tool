@@ -5,7 +5,6 @@ from cdc_places_tool.llm_parser import (
     intent_from_json,
     parse_question_with_ollama,
     parse_question_with_openai,
-    parse_question_with_xai,
 )
 
 
@@ -117,55 +116,6 @@ def test_parse_question_with_openai_payload(monkeypatch):
     assert captured["payload"]["model"] == "test-openai-model"
     assert captured["payload"]["text"]["format"]["type"] == "json_schema"
     assert intent.measure_id == "uninsured"
-
-
-def test_parse_question_with_xai_payload(monkeypatch):
-    captured = {}
-
-    class FakeResponse:
-        def __enter__(self):
-            return self
-
-        def __exit__(self, exc_type, exc, tb):
-            return False
-
-    def fake_urlopen(request, timeout):
-        captured["url"] = request.full_url
-        captured["payload"] = json.loads(request.data.decode("utf-8"))
-        return FakeResponse()
-
-    def fake_json_load(response):
-        return {
-            "choices": [
-                {
-                    "message": {
-                        "content": json.dumps(
-                            {
-                                "operation": "explain",
-                                "measure_id": "poor_mental_health",
-                                "state": "unknown",
-                                "direction": "unknown",
-                                "limit": 10,
-                                "confidence": "high",
-                            }
-                        )
-                    }
-                }
-            ]
-        }
-
-    monkeypatch.setenv("XAI_API_KEY", "test-key")
-    monkeypatch.setenv("XAI_MODEL", "test-xai-model")
-    monkeypatch.setattr("cdc_places_tool.llm_parser.urlopen", fake_urlopen)
-    monkeypatch.setattr("cdc_places_tool.llm_parser.json.load", fake_json_load)
-
-    from cdc_places_tool.semantic import load_semantic_layer
-
-    intent = parse_question_with_xai("what is poor mental health", load_semantic_layer())
-    assert captured["url"] == "https://api.x.ai/v1/chat/completions"
-    assert captured["payload"]["model"] == "test-xai-model"
-    assert captured["payload"]["response_format"]["type"] == "json_schema"
-    assert intent.operation == "explain"
 
 
 def test_extract_model_text_from_responses_output_shape():

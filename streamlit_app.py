@@ -167,7 +167,7 @@ def main() -> None:
     with ask_tab:
         parser_label = st.radio(
             "Parser",
-            ["Rules", "Local LLM via Ollama", "OpenAI", "Grok/xAI", "Auto fallback"],
+            ["Rules", "Local LLM via Ollama", "OpenAI", "Auto fallback"],
             horizontal=True,
             help="The LLM only parses intent JSON. The semantic layer still validates and executes the query.",
         )
@@ -175,7 +175,6 @@ def main() -> None:
             "Rules": "rules",
             "Local LLM via Ollama": "ollama",
             "OpenAI": "openai",
-            "Grok/xAI": "xai",
             "Auto fallback": "auto",
         }[parser_label]
         question = st.text_area(

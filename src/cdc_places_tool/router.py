@@ -11,7 +11,6 @@ from cdc_places_tool.llm_parser import (
     ParsedIntent,
     parse_question_with_ollama,
     parse_question_with_openai,
-    parse_question_with_xai,
 )
 from cdc_places_tool.query import compare, rank, summarize
 from cdc_places_tool.semantic import Measure, SemanticLayer, normalize_term
@@ -91,7 +90,7 @@ def route_question(
     if not allowed:
         return RoutedAnswer(ok=False, message=guardrail_message or "Unsupported question.")
 
-    if parser in {"ollama", "openai", "xai", "auto"}:
+    if parser in {"ollama", "openai", "auto"}:
         try:
             intent = parse_question_with_provider(question, layer, parser)
             return route_intent(question, rows, layer, intent)
@@ -145,8 +144,6 @@ def route_question(
 def parse_question_with_provider(question: str, layer: SemanticLayer, parser: str) -> ParsedIntent:
     if parser == "openai":
         return parse_question_with_openai(question, layer)
-    if parser == "xai":
-        return parse_question_with_xai(question, layer)
     return parse_question_with_ollama(question, layer)
 
 
