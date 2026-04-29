@@ -8,6 +8,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlparse
 
 from cdc_places_tool.data import place_label
+from cdc_places_tool.feedback import log_question, summarize_question_log
 from cdc_places_tool.render import measure_to_text, result_to_text
 from cdc_places_tool.router import route_question
 from cdc_places_tool.semantic import SemanticLayer
@@ -55,7 +56,7 @@ HTML = """<!doctype html>
         <button class="secondary" data-example="Summarize Harris County, TX">Summarize</button>
         <button class="secondary" data-example="Explain uninsured">Explain</button>
       </div>
-      <p class="hint">Allowed operations: rank, compare, summarize, explain. Causal, prediction, count, and arbitrary statistical questions are refused for now.</p>
+      <p class="hint">Allowed operations: rank, compare, summarize, explain. Questions are logged locally so the semantic layer can improve over time.</p>
       <pre id="answer">Ready.</pre>
     </section>
     <section>
@@ -71,6 +72,7 @@ HTML = """<!doctype html>
       </div>
       <div class="actions">
         <button id="rank">Rank selected measure</button>
+        <button class="secondary" id="feedback">Feedback summary</button>
       </div>
       <h2>Available Measures</h2>
       <ul class="measure-list" id="measures"></ul>
@@ -111,6 +113,12 @@ HTML = """<!doctype html>
       const state = stateInput.value.trim();
       ask(`Which ${state ? state + " " : ""}counties have the highest ${label}?`);
     });
+    document.querySelector("#feedback").addEventListener("click", async () => {
+      answer.textContent = "Loading feedback summary...";
+      const response = await fetch("/api/feedback");
+      const payload = await response.json();
+      answer.textContent = payload.summary;
+    });
     document.querySelectorAll("[data-example]").forEach((button) => {
       button.addEventListener("click", () => {
         question.value = button.dataset.example;
@@ -142,6 +150,9 @@ def make_handler(rows: list[dict], layer: SemanticLayer) -> type[BaseHTTPRequest
             if parsed.path == "/api/places":
                 self.send_json({"places": [place_label(row) for row in rows]})
                 return
+            if parsed.path == "/api/feedback":
+                self.send_json({"summary": format_feedback_summary()})
+                return
             query = parse_qs(parsed.query)
             if parsed.path == "/api/ask" and "question" in query:
                 self.answer_question(query["question"][0])
@@ -163,6 +174,13 @@ def make_handler(rows: list[dict], layer: SemanticLayer) -> type[BaseHTTPRequest
 
         def answer_question(self, question: str) -> None:
             routed = route_question(question, rows, layer)
+            log_question(
+                question=question,
+                ok=routed.ok,
+                operation=routed.operation,
+                measure_id=routed.measure.id if routed.measure else None,
+                message=routed.message,
+            )
             if not routed.ok:
                 self.send_json({"ok": False, "answer": routed.message})
                 return
@@ -194,6 +212,26 @@ def make_handler(rows: list[dict], layer: SemanticLayer) -> type[BaseHTTPRequest
             return
 
     return PlacesHandler
+
+
+def format_feedback_summary() -> str:
+    summary = summarize_question_log()
+    lines = [
+        f"Total questions: {summary['total_questions']}",
+        f"Accepted: {summary['accepted_questions']}",
+        f"Refused: {summary['refused_questions']}",
+        "",
+        "Operations",
+    ]
+    lines.extend(f"- {operation}: {count}" for operation, count in summary["operations"])
+    lines.append("")
+    lines.append("Measures")
+    lines.extend(f"- {measure}: {count}" for measure, count in summary["measures"])
+    if summary["recent_refusals"]:
+        lines.append("")
+        lines.append("Recent refusals")
+        lines.extend(f"- {entry.question} -> {entry.message}" for entry in summary["recent_refusals"])
+    return "\n".join(lines)
 
 
 def run_server(rows: list[dict], layer: SemanticLayer, host: str = "127.0.0.1", port: int = 8765) -> None:

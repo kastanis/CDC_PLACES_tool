@@ -5,6 +5,7 @@ from pathlib import Path
 import click
 
 from cdc_places_tool.data import load_rows
+from cdc_places_tool.feedback import log_question, summarize_question_log
 from cdc_places_tool.importer import fetch_county_data
 from cdc_places_tool.query import compare, rank, summarize
 from cdc_places_tool.render import (
@@ -86,6 +87,13 @@ def explain(ctx: click.Context, measure: str) -> None:
 def ask(ctx: click.Context, question: str) -> None:
     """Route a plain-English question through approved operations."""
     answer = route_question(question, ctx.obj["rows"], ctx.obj["layer"])
+    log_question(
+        question=question,
+        ok=answer.ok,
+        operation=answer.operation,
+        measure_id=answer.measure.id if answer.measure else None,
+        message=answer.message,
+    )
     if not answer.ok:
         click.echo(answer.message)
         raise click.Abort()
@@ -112,6 +120,25 @@ def fetch_counties() -> None:
 def serve(ctx: click.Context, host: str, port: int) -> None:
     """Start the local reporter-facing web UI."""
     run_server(ctx.obj["rows"], ctx.obj["layer"], host=host, port=port)
+
+
+@main.command("feedback-summary")
+def feedback_summary() -> None:
+    """Summarize locally logged questions."""
+    summary = summarize_question_log()
+    click.echo(f"Total questions: {summary['total_questions']}")
+    click.echo(f"Accepted: {summary['accepted_questions']}")
+    click.echo(f"Refused: {summary['refused_questions']}")
+    click.echo("\nOperations:")
+    for operation, count in summary["operations"]:
+        click.echo(f"- {operation}: {count}")
+    click.echo("\nMeasures:")
+    for measure, count in summary["measures"]:
+        click.echo(f"- {measure}: {count}")
+    if summary["recent_refusals"]:
+        click.echo("\nRecent refusals:")
+        for entry in summary["recent_refusals"]:
+            click.echo(f"- {entry.question} -> {entry.message}")
 
 
 if __name__ == "__main__":

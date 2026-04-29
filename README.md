@@ -84,6 +84,12 @@ Then open:
 http://127.0.0.1:8765
 ```
 
+Summarize logged questions:
+
+```bash
+places feedback-summary
+```
+
 ## Current Status
 
 This repo starts with a small real CDC PLACES extract in `data/sample_places_county.csv` and can now fetch a full county file for the currently modeled semantic measures into `data/places_county_current.csv`.
@@ -100,6 +106,14 @@ The plain-English router only maps questions into approved semantic operations:
 - `explain`
 
 It refuses questions that ask for causal claims, forecasts, arbitrary statistical modeling, SQL, or people counts derived from prevalence estimates.
+
+## Feedback Loop
+
+Plain-English questions are logged locally to `logs/questions.jsonl`, which is ignored by Git. The log records the question, whether it was answered, the matched operation, the matched measure, and any refusal message. It does not record names, emails, IP addresses, or browser identifiers.
+
+Use the log to decide what to add next: synonyms, measures, place aliases, new safe operations, or clearer refusal messages. The tool should not automatically expand acceptable questions without review.
+
+See [docs/tool_pattern.md](docs/tool_pattern.md) for the reusable pattern behind this prototype.
 
 Useful next steps:
 

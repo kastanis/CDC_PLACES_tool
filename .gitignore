@@ -6,5 +6,5 @@ __pycache__/
 .pytest_cache/
 *.egg-info/
 results/*.json
+logs/*.jsonl
 data/raw/
-
