@@ -84,6 +84,13 @@ Then open:
 http://127.0.0.1:8765
 ```
 
+Start the Streamlit app:
+
+```bash
+pip install -r requirements.txt
+streamlit run streamlit_app.py
+```
+
 Summarize logged questions:
 
 ```bash
@@ -118,6 +125,8 @@ It refuses questions that ask for causal claims, forecasts, arbitrary statistica
 Plain-English questions are logged locally to `logs/questions.jsonl` by default, which is ignored by Git. The log records the question, whether it was answered, the matched operation, the matched measure, and any refusal message. It does not record names, emails, IP addresses, or browser identifiers.
 
 For shared prototypes, set `FEEDBACK_BACKEND=supabase` and configure `SUPABASE_URL`, `SUPABASE_KEY`, and `SUPABASE_FEEDBACK_TABLE`. See [docs/supabase_feedback.md](docs/supabase_feedback.md).
+
+For the hosted Streamlit version, see [docs/streamlit_deploy.md](docs/streamlit_deploy.md).
 
 Use the log to decide what to add next: synonyms, measures, place aliases, new safe operations, or clearer refusal messages. The tool should not automatically expand acceptable questions without review.
 

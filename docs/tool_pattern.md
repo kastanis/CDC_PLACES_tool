@@ -31,6 +31,7 @@ Reusable pieces:
 - plain-English router structure
 - guardrail structure
 - local web UI structure
+- Streamlit app shell
 - feedback logging
 
 ## Semantic Layer Checklist
